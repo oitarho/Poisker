@@ -1,0 +1,89 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-poisker}
+      POSTGRES_USER: ${POSTGRES_USER:-poisker}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-poisker}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - poisker_pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - poisker_redisdata:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  typesense:
+    image: typesense/typesense:0.25.2
+    ports:
+      - "${TYPESENSE_PORT:-8108}:8108"
+    environment:
+      TYPESENSE_API_KEY: ${TYPESENSE_API_KEY:-xyz}
+    volumes:
+      - poisker_typesense:/data
+      - ./docker/typesense/typesense-server.ini:/etc/typesense/typesense-server.ini:ro
+    command: ["--config", "/etc/typesense/typesense-server.ini"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8108/health | grep -q ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    env_file:
+      - ./backend/.env
+    environment:
+      POISKER_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-poisker}:${POSTGRES_PASSWORD:-poisker}@postgres:5432/${POSTGRES_DB:-poisker}
+      POISKER_REDIS_URL: redis://redis:6379/0
+      POISKER_TYPESENSE_HOST: typesense
+      POISKER_TYPESENSE_PORT: 8108
+      POISKER_TYPESENSE_PROTOCOL: http
+      POISKER_TYPESENSE_API_KEY: ${TYPESENSE_API_KEY:-xyz}
+      POISKER_ADMIN_TOKEN: ${POISKER_ADMIN_TOKEN:-dev-admin-token}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      TYPESENSE_HOST: typesense
+      TYPESENSE_PORT: 8108
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - poisker_media:/app/var/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      typesense:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/api/v1/health | grep -q ok"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  poisker_pgdata:
+  poisker_redisdata:
+  poisker_typesense:
+  poisker_media:

@@ -1,0 +1,50 @@
+# --- general ---
+.DS_Store
+*.log
+
+# env / secrets
+.env
+backend/.env
+frontend/.env
+**/*.pem
+**/*.key
+
+# local media/uploads
+backend/var/
+var/
+
+# python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+ENV/
+
+# alembic / build artifacts
+backend/*.egg-info/
+dist/
+build/
+
+# flutter / dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+pubspec.lock
+frontend/build/
+frontend/.dart_tool/
+frontend/.idea/
+frontend/.vscode/
+
+# android/ios generated
+frontend/android/.gradle/
+frontend/android/local.properties
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+
+# IDE
+.idea/
+.vscode/
