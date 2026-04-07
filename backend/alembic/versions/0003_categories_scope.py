@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 
 revision = "0003_categories_scope"
@@ -18,8 +19,18 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.execute("CREATE TYPE category_scope AS ENUM ('product','service','both');")
-    op.add_column("categories", sa.Column("scope", sa.Enum(name="category_scope"), nullable=True))
+    op.execute(
+        "DO $$ BEGIN CREATE TYPE category_scope AS ENUM ('product','service','both'); "
+        "EXCEPTION WHEN duplicate_object THEN NULL; END $$;"
+    )
+    op.add_column(
+        "categories",
+        sa.Column(
+            "scope",
+            postgresql.ENUM("product", "service", "both", name="category_scope", create_type=False),
+            nullable=True,
+        ),
+    )
     op.execute("UPDATE categories SET scope='both' WHERE scope IS NULL;")
     op.alter_column("categories", "scope", nullable=False)
     op.create_index("ix_categories_scope", "categories", ["scope"], unique=False)

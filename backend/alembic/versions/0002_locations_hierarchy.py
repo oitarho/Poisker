@@ -19,9 +19,19 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.execute("CREATE TYPE location_type AS ENUM ('republic','district','city','village');")
+    op.execute(
+        "DO $$ BEGIN CREATE TYPE location_type AS ENUM ('republic','district','city','village'); "
+        "EXCEPTION WHEN duplicate_object THEN NULL; END $$;"
+    )
 
-    op.add_column("locations", sa.Column("type", sa.Enum(name="location_type"), nullable=True))
+    op.add_column(
+        "locations",
+        sa.Column(
+            "type",
+            postgresql.ENUM("republic", "district", "city", "village", name="location_type", create_type=False),
+            nullable=True,
+        ),
+    )
     op.add_column(
         "locations",
         sa.Column("parent_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("locations.id", ondelete="SET NULL"), nullable=True),

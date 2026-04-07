@@ -1,6 +1,7 @@
 fastapi
 uvicorn[standard]
 pydantic
+email-validator
 pydantic-settings
 SQLAlchemy
 asyncpg
@@ -10,5 +11,8 @@ redis
 typesense
 python-jose[cryptography]
 passlib[bcrypt]
+bcrypt<4
 structlog
 anyio
+pytest
+pytest-asyncio

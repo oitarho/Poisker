@@ -11,14 +11,11 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", description="Log level")
 
     api_v1_prefix: str = Field(default="/api/v1", description="API v1 prefix")
-    cors_origins: list[str] = Field(
-        default_factory=lambda: [
-            "http://localhost:5173",
-            "http://localhost:8080",
-            "http://localhost:3000",
-            "http://127.0.0.1:8080",
-        ],
-        description="Allowed CORS origins",
+    # Keep as string so pydantic-settings doesn't JSON-decode it as a complex type.
+    # Format: comma-separated origins.
+    cors_origins: str = Field(
+        default="http://localhost:5173,http://localhost:8080,http://localhost:3000,http://127.0.0.1:8080",
+        description="Allowed CORS origins (comma-separated)",
     )
 
     database_url: str = Field(
@@ -56,6 +53,29 @@ class Settings(BaseSettings):
         description="If set, required in X-Admin-Token header for admin endpoints",
     )
 
+    # SMTP (email verification / password reset)
+    smtp_enabled: bool = Field(default=False, description="If false, outbound email is skipped (log only)")
+    smtp_host: str = Field(default="smtp.yandex.ru")
+    smtp_port: int = Field(default=465)
+    smtp_username: str = Field(default="")
+    smtp_password: str = Field(default="")
+    smtp_from_email: str = Field(default="noreply@example.com")
+    smtp_from_name: str = Field(default="Poisker")
+    smtp_use_tls: bool = Field(
+        default=True,
+        description="For port 587: use STARTTLS. For 465, implicit SSL is used regardless.",
+    )
+
+    # Email / reset codes (Redis-backed)
+    code_pepper: str = Field(
+        default="",
+        description="Extra secret for hashing codes; defaults to jwt_secret if empty",
+    )
+    code_ttl_seconds: int = Field(default=600, description="Verification/reset code lifetime (10 min)")
+    code_resend_cooldown_seconds: int = Field(default=60, description="Min seconds between sends per email")
+    code_max_sends_per_hour: int = Field(default=5, description="Max verification/reset emails per hour per email")
+    code_max_failed_attempts: int = Field(default=5, description="Invalidate code after this many wrong attempts")
+
     @field_validator("upload_allowed_image_types", mode="before")
     @classmethod
     def _parse_csv_list(cls, v):
@@ -64,6 +84,14 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return [x.strip() for x in v.split(",") if x.strip()]
         return v
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [x.strip() for x in self.cors_origins.split(",") if x.strip()]
+
+    @property
+    def code_pepper_effective(self) -> str:
+        return self.code_pepper or self.jwt_secret
 
 
 settings = Settings()

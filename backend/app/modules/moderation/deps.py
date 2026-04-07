@@ -8,7 +8,7 @@ from app.core.config import settings
 from app.core.errors import ForbiddenError
 
 
-async def require_admin(x_admin_token: Annotated[str | None, Header(default=None)]) -> None:
+async def require_admin(x_admin_token: Annotated[str | None, Header()] = None) -> None:
     """
     Placeholder admin dependency.
 

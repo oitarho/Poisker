@@ -57,6 +57,11 @@ async def register_user(
     await db.commit()
 
     access, refresh = issue_token_pair(user_id=str(user.id), refresh_jti=jti)
+
+    from app.modules.auth.email_auth import send_verification_after_register
+
+    await send_verification_after_register(db, email=user.email)
+
     return user, access, refresh
 
 

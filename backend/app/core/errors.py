@@ -23,3 +23,8 @@ class ForbiddenError(AppError):
 class NotFoundError(AppError):
     def __init__(self, message: str = "Not found") -> None:
         super().__init__(code="not_found", message=message, status_code=404)
+
+
+class TooManyRequestsError(AppError):
+    def __init__(self, *, code: str = "rate_limited", message: str = "Too many requests") -> None:
+        super().__init__(code=code, message=message, status_code=429)

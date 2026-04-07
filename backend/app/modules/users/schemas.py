@@ -15,6 +15,7 @@ class UserProfile(BaseModel):
     full_name: str | None
     phone_number: str | None
     is_email_verified: bool
+    email_verified_at: datetime | None
     is_phone_verified: bool
     rating: float
     reviews_count: int

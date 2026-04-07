@@ -91,14 +91,9 @@ async def reindex_all_active(db: AsyncSession) -> int:
     client = get_typesense_client()
     name = settings.typesense_listings_collection
 
-    rows = (
-        await db.scalars(
-            select(Listing)
-            .where(Listing.status == ListingStatus.active)
-            .options(load_only(Listing.id))
-        )
+    ids = (
+        await db.scalars(select(Listing.id).where(Listing.status == ListingStatus.active))
     ).all()
-    ids = [r.id for r in rows]
 
     async def _upsert_one(lid):
         await upsert_listing(db, listing_id=lid)

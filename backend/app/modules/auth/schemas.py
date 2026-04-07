@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
@@ -34,6 +35,7 @@ class UserMe(BaseModel):
     full_name: str | None
     phone_number: str | None
     is_email_verified: bool
+    email_verified_at: datetime | None
     is_phone_verified: bool
     rating: float
     reviews_count: int
@@ -44,4 +46,43 @@ class UserMe(BaseModel):
 class AuthResponse(BaseModel):
     tokens: TokenPair
     user: UserMe
+
+
+class VerifyEmailRequestBody(BaseModel):
+    """When not authenticated, provide email to resend verification."""
+
+    email: EmailStr | None = None
+
+
+class VerifyEmailRequestResult(BaseModel):
+    status: Literal["sent", "already_verified"]
+    message: str
+
+
+class VerifyEmailConfirmRequest(BaseModel):
+    email: EmailStr
+    code: str = Field(pattern=r"^\d{6}$")
+
+
+class VerifyEmailConfirmResult(BaseModel):
+    status: Literal["verified", "already_verified"]
+    message: str
+
+
+class PasswordResetRequestBody(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetRequestResult(BaseModel):
+    message: str
+
+
+class PasswordResetConfirmRequest(BaseModel):
+    email: EmailStr
+    code: str = Field(pattern=r"^\d{6}$")
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+class PasswordResetConfirmResult(BaseModel):
+    message: str
 

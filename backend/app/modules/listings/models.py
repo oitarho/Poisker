@@ -6,6 +6,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     CheckConstraint,
+    DateTime,
     Enum,
     ForeignKey,
     Index,
@@ -63,7 +64,7 @@ class Listing(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     price: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False, server_default="0")
 
-    published_at: Mapped[datetime | None] = mapped_column(nullable=True, index=True)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
 
     # ranking support
     views_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")

@@ -191,9 +191,6 @@ async def seed_dev() -> None:
                 favorites_count=0,
                 boost_score=0,
             )
-            # override timestamps for realism
-            l.created_at = created_at
-            l.updated_at = created_at
             session.add(l)
             listings.append(l)
         await session.flush()
@@ -214,11 +211,16 @@ async def seed_dev() -> None:
 
         # Favorites (only for active listings)
         active_listings = [l for l in listings if l.status == ListingStatus.active]
+        seen_favs: set[tuple[str, str]] = set()
         for _ in range(120):
             u = random.choice(users)
             l = random.choice(active_listings)
             if l.owner_id == u.id:
                 continue
+            key = (str(u.id), str(l.id))
+            if key in seen_favs:
+                continue
+            seen_favs.add(key)
             session.add(Favorite(user_id=u.id, listing_id=l.id))
         await session.flush()
 

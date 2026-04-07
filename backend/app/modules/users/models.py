@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Index, String, Text, UniqueConstraint, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -20,6 +20,7 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     phone_number: Mapped[str | None] = mapped_column(String(32), nullable=True)
 
     is_email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     is_phone_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
 
     rating: Mapped[float] = mapped_column(nullable=False, server_default="0")
@@ -54,7 +55,9 @@ class RefreshToken(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         Index("ix_refresh_tokens_user_id_created_at", "user_id", "created_at"),
     )
 
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     jti: Mapped[str] = mapped_column(String(64), nullable=False)
     revoked: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)

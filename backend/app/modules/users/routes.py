@@ -19,6 +19,7 @@ def _profile(u) -> UserProfile:
         full_name=u.full_name,
         phone_number=u.phone_number,
         is_email_verified=u.is_email_verified,
+        email_verified_at=u.email_verified_at,
         is_phone_verified=u.is_phone_verified,
         rating=float(u.rating),
         reviews_count=int(u.reviews_count),

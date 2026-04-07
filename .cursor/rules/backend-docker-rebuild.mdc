@@ -1,0 +1,20 @@
+---
+description: Rebuild and recreate Docker backend after code changes so the running container matches the repo
+globs: backend/**/*
+alwaysApply: false
+---
+
+# Backend Docker: пересборка после правок
+
+Если менялся код в `backend/` (или `docker/backend/`), локальный контейнер **не подхватывает** изменения без пересборки образа.
+
+После изменений выполняй в корне репозитория:
+
+```bash
+docker compose build backend
+docker compose up -d --force-recreate backend
+```
+
+Иначе API может отдавать старый код (в т.ч. без новых маршрутов OpenAPI).
+
+Проверка: `curl -s http://localhost:8000/openapi.json | jq '.paths | keys'` — должны быть актуальные пути.

@@ -79,9 +79,6 @@ def upgrade() -> None:
     op.create_index("ix_refresh_tokens_expires_at", "refresh_tokens", ["expires_at"], unique=False)
     op.create_index("ix_refresh_tokens_user_id_created_at", "refresh_tokens", ["user_id", "created_at"], unique=False)
 
-    op.execute("CREATE TYPE listing_kind AS ENUM ('product','service');")
-    op.execute("CREATE TYPE listing_status AS ENUM ('draft','pending','active','archived','rejected');")
-
     op.create_table(
         "listings",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
@@ -90,8 +87,16 @@ def upgrade() -> None:
         sa.Column("owner_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
         sa.Column("location_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("locations.id", ondelete="RESTRICT"), nullable=False),
         sa.Column("category_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("categories.id", ondelete="RESTRICT"), nullable=False),
-        sa.Column("kind", sa.Enum(name="listing_kind"), nullable=False),
-        sa.Column("status", sa.Enum(name="listing_status"), nullable=False),
+        sa.Column(
+            "kind",
+            postgresql.ENUM("product", "service", name="listing_kind"),
+            nullable=False,
+        ),
+        sa.Column(
+            "status",
+            postgresql.ENUM("draft", "pending", "active", "archived", "rejected", name="listing_status"),
+            nullable=False,
+        ),
         sa.Column("title", sa.String(length=120), nullable=False),
         sa.Column("description", sa.Text(), nullable=False),
         sa.Column("price", sa.Numeric(12, 2), server_default=sa.text("0"), nullable=False),
@@ -186,15 +191,17 @@ def upgrade() -> None:
     op.create_index("ix_reviews_target_user_id_created_at", "reviews", ["target_user_id", "created_at"], unique=False)
     op.create_index("ix_reviews_listing_id", "reviews", ["listing_id"], unique=False)
 
-    op.execute("CREATE TYPE moderation_entity_type AS ENUM ('listing','review','user','message');")
-
     op.create_table(
         "moderation_logs",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("actor_admin_user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
-        sa.Column("entity_type", sa.Enum(name="moderation_entity_type"), nullable=False),
+        sa.Column(
+            "entity_type",
+            postgresql.ENUM("listing", "review", "user", "message", name="moderation_entity_type"),
+            nullable=False,
+        ),
         sa.Column("entity_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("action", sa.String(length=64), nullable=False),
         sa.Column("reason", sa.Text(), nullable=True),
